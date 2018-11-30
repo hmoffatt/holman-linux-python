@@ -29,14 +29,18 @@ class TapTimerPrintListener(holman.TapTimerListener):
     def disconnect_succeeded(self):
         self.print("disconnected")
 
+    def timer_written(self):
+        self.print("timer written")
+
     def print(self, string):
         print("Holman tap timer " + self.tap_timer.mac_address + " " + string)
 
-
 class TapTimerTestListener(TapTimerPrintListener):
-    def __init__(self, tap_timer, auto_reconnect=False):
+    def __init__(self, tap_timer, auto_reconnect=False, auto_start=None, auto_exit=False):
         super().__init__(tap_timer)
         self.auto_reconnect = auto_reconnect
+        self.auto_start = auto_start
+        self.auto_exit = auto_exit
 
     def connect_failed(self, error):
         super().connect_failed(error)
@@ -53,6 +57,21 @@ class TapTimerTestListener(TapTimerPrintListener):
         else:
             tap_timer_manager.stop()
             sys.exit(0)
+
+    def connect_succeeded(self):
+        super().connect_succeeded()
+        if self.auto_start is not None:
+            if self.auto_start == 0:
+                self.tap_timer.stop()
+            else:
+                self.tap_timer.start(self.auto_start)
+            self.auto_start = None
+
+    def timer_written(self):
+        super().timer_written()
+        if self.auto_exit:
+            self.print('exiting')
+            tap_timer_manager.stop()
 
 
 class TapTimerManagerPrintListener(holman.TapTimerManagerListener):
@@ -90,10 +109,30 @@ def main():
         metavar='address',
         type=str,
         help="Disconnect a Holman tap timer with a given MAC address")
+    arg_parser.add_argument(
+        '--run',
+        default=None,
+        metavar='MINUTES',
+        type=int,
+        help="Run the timer for the specified number of minutes")
+    arg_parser.add_argument(
+        '--exit',
+        action='store_const',
+        const=True,
+        default=False,
+        help="Exit after starting the timer")
     args = arg_parser.parse_args()
 
     global tap_timer_manager
     tap_timer_manager = holman.TapTimerManager(adapter_name=args.adapter)
+
+    if args.exit and args.run is None:
+        arg_parser.error('--exit can only be used with --run.')
+        return
+
+    if args.run is not None and not (args.connect or args.auto):
+        arg_parser.error('--run can only be used with --auto or --connect.')
+        return
 
     if args.discover:
         tap_timer_manager.listener = TapTimerManagerPrintListener()
@@ -108,14 +147,15 @@ def main():
         tap_timer.connect()
     elif args.auto:
         tap_timer = holman.TapTimer(mac_address=args.auto, manager=tap_timer_manager)
-        tap_timer.listener = TapTimerTestListener(tap_timer=tap_timer, auto_reconnect=True)
+        tap_timer.listener = TapTimerTestListener(tap_timer=tap_timer, auto_reconnect=True, auto_start=args.run, auto_exit=args.exit)
         tap_timer.connect()
     elif args.disconnect:
         tap_timer = holman.TapTimer(mac_address=args.disconnect, manager=tap_timer_manager)
         tap_timer.disconnect()
         return
 
-    print("Terminate with Ctrl+C")
+    if not args.exit:
+        print("Terminate with Ctrl+C")
     try:
         tap_timer_manager.run()
     except KeyboardInterrupt:
