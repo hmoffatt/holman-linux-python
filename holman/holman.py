@@ -226,6 +226,8 @@ class TapTimer(gatt.Device):
 
     def characteristic_write_value_succeeded(self, characteristic):
         self._refresh_state()
+        if self.listener and characteristic == self._manual_characteristic:
+            self.listener.timer_written()
 
     def characteristic_write_value_failed(self, characteristic, error):
         self._refresh_state()
