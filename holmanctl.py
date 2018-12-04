@@ -132,8 +132,8 @@ def main():
         arg_parser.error('--run can only be used with --auto or --connect.')
         return
 
-    if args.stop is not None and not (args.connect or args.auto):
-        arg_parser.error('--run can only be used with --auto or --connect.')
+    if args.stop and not (args.connect or args.auto):
+        arg_parser.error('--stop can only be used with --auto or --connect.')
         return
 
     run_time = 0 if args.stop else args.run
