@@ -60,6 +60,8 @@ class TapTimerTestListener(TapTimerPrintListener):
 
     def connect_succeeded(self):
         super().connect_succeeded()
+        self.print("battery level: %sV" % self.tap_timer.battery_level)
+
         if self.auto_start is not None:
             if self.auto_start == 0:
                 self.tap_timer.stop()
