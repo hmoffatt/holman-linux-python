@@ -109,30 +109,35 @@ def main():
         metavar='address',
         type=str,
         help="Disconnect a Holman tap timer with a given MAC address")
-    arg_parser.add_argument(
+
+    arg_run_group = arg_parser.add_mutually_exclusive_group(required=False)
+    arg_run_group.add_argument(
         '--run',
         default=None,
         metavar='MINUTES',
         type=int,
         help="Run the timer for the specified number of minutes")
-    arg_parser.add_argument(
-        '--exit',
+    arg_run_group.add_argument(
+        '--stop',
         action='store_const',
         const=True,
         default=False,
-        help="Exit after starting the timer")
+        help="Stop the timer")
     args = arg_parser.parse_args()
 
     global tap_timer_manager
     tap_timer_manager = holman.TapTimerManager(adapter_name=args.adapter)
 
-    if args.exit and args.run is None:
-        arg_parser.error('--exit can only be used with --run.')
-        return
-
     if args.run is not None and not (args.connect or args.auto):
         arg_parser.error('--run can only be used with --auto or --connect.')
         return
+
+    if args.stop is not None and not (args.connect or args.auto):
+        arg_parser.error('--run can only be used with --auto or --connect.')
+        return
+
+    run_time = 0 if args.stop else args.run
+    auto_exit = run_time is not None
 
     if args.discover:
         tap_timer_manager.listener = TapTimerManagerPrintListener()
@@ -143,18 +148,18 @@ def main():
         return
     elif args.connect:
         tap_timer = holman.TapTimer(mac_address=args.connect, manager=tap_timer_manager)
-        tap_timer.listener = TapTimerTestListener(tap_timer=tap_timer)
+        tap_timer.listener = TapTimerTestListener(tap_timer=tap_timer, auto_start=run_time, auto_exit=auto_exit)
         tap_timer.connect()
     elif args.auto:
         tap_timer = holman.TapTimer(mac_address=args.auto, manager=tap_timer_manager)
-        tap_timer.listener = TapTimerTestListener(tap_timer=tap_timer, auto_reconnect=True, auto_start=args.run, auto_exit=args.exit)
+        tap_timer.listener = TapTimerTestListener(tap_timer=tap_timer, auto_reconnect=True, auto_start=run_time, auto_exit=auto_exit)
         tap_timer.connect()
     elif args.disconnect:
         tap_timer = holman.TapTimer(mac_address=args.disconnect, manager=tap_timer_manager)
         tap_timer.disconnect()
         return
 
-    if not args.exit:
+    if not auto_exit:
         print("Terminate with Ctrl+C")
     try:
         tap_timer_manager.run()
