@@ -107,10 +107,9 @@ class TapTimer(gatt.Device):
         super().__init__(mac_address=mac_address, manager=manager)
 
         self.listener = None
-        self._battery_level = None
         self._manual_characteristic = None
         self._state_characteristic = None
-        self._state = bytes([0])
+        self._state = bytes([0]*8)
 
     def connect(self):
         """
@@ -186,9 +185,15 @@ class TapTimer(gatt.Device):
         if self.listener:
             self.listener.connect_succeeded()
 
+    @property
     def battery_level(self):
-        # TODO: determine which byte in state is used for battery level
-        return self._battery_level
+        """Battery level in volts."""
+        self._refresh_state()
+
+        # Battery level in 10ths of a volt is in status[5].
+        # Status[8] indicates battery level high (0x58), medium (0x18) or low (0x98).
+        # These apply to the CO3011, to be verified on the CO3015.
+        return self._state[5]/10.
 
     def _refresh_state(self):
         if self._state_characteristic:

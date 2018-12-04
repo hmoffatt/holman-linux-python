@@ -54,6 +54,9 @@ class TapTimerTestListener(TapTimerPrintListener):
             tap_timer_manager.stop()
             sys.exit(0)
 
+    def connect_succeeded(self):
+        super().connect_succeeded()
+        self.print("battery level: %sV" % self.tap_timer.battery_level)
 
 class TapTimerManagerPrintListener(holman.TapTimerManagerListener):
     def tap_timer_discovered(self, tap_timer):
