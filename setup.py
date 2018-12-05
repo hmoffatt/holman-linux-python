@@ -16,6 +16,6 @@ setup(
     license='MIT',
     py_modules=['holmanctl'],
     entry_points={
-        'console_scripts': ['holmanctl = holmanctl:main']
+        'console_scripts': ['holmanctl = holmanctl:main', 'holmand = holmand:main']
     }
 )
