@@ -1,0 +1,9 @@
+[Unit]
+Description=Holman controller
+After=syslog.target network.target
+[Service]
+ExecStart=/usr/local/bin/holdmand
+Restart=on-abort
+WorkingDirectory=/
+[Install]
+WantedBy=multi-user.target

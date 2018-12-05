@@ -10,8 +10,6 @@ from argparse import ArgumentParser
 import holman
 
 tap_timer_manager = None
-holman_socket = '/run/holman.sock'
-
 
 class TapTimerPrintListener(holman.TapTimerListener):
     """
@@ -91,21 +89,25 @@ def main():
         '--adapter',
         default='hci0',
         help="Name of Bluetooth adapter, defaults to 'hci0'")
+    arg_parser.add_argument(
+        '--socket',
+        default='/run/holman.sock',
+        help="Path to control socket, defaults to '/run/holman.sock'")
     args = arg_parser.parse_args()
 
     global tap_timer_manager
     tap_timer_manager = holman.TapTimerManager(adapter_name=args.adapter)
-    manager_thread = Thread(target = tap_timer_manager.run)
+    manager_thread = Thread(target = tap_timer_manager.run, daemon = True)
 
     tap_timers = {}
 
     try:
-        os.unlink(holman_socket)
+        os.unlink(args.socket)
     except IOError:
         pass
 
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    sock.bind(holman_socket)
+    sock.bind(args.socket)
 
     try:
         manager_thread.start()

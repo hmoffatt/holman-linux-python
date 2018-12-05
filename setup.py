@@ -14,7 +14,7 @@ setup(
     author='Scott McKenzie',
     author_email='developers@noizyland.net',
     license='MIT',
-    py_modules=['holmanctl'],
+    py_modules=['holmanctl', 'holmand'],
     entry_points={
         'console_scripts': ['holmanctl = holmanctl:main', 'holmand = holmand:main']
     }
