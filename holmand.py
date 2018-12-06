@@ -37,7 +37,7 @@ class TapTimerPrintListener(holman.TapTimerListener):
         self.print("timer written")
 
     def print(self, string):
-        print("Holman tap timer " + self.tap_timer.mac_address + " " + string, flush=True)
+        print("Holman tap timer " + self.tap_timer.mac_address + " " + string)
 
 class TapTimerTestListener(TapTimerPrintListener):
     def __init__(self, tap_timer, auto_reconnect=False, auto_start=None, auto_exit=False):
@@ -80,7 +80,7 @@ class TapTimerTestListener(TapTimerPrintListener):
 
 class TapTimerManagerPrintListener(holman.TapTimerManagerListener):
     def tap_timer_discovered(self, tap_timer):
-        print("Discovered Holman tap timer", tap_timer.mac_address, flush=True)
+        print("Discovered Holman tap timer", tap_timer.mac_address)
 
 
 def main():
@@ -94,6 +94,8 @@ def main():
         default='/run/holman.sock',
         help="Path to control socket, defaults to '/run/holman.sock'")
     args = arg_parser.parse_args()
+
+    print("Starting")
 
     global tap_timer_manager
     tap_timer_manager = holman.TapTimerManager(adapter_name=args.adapter)
@@ -112,14 +114,16 @@ def main():
     try:
         manager_thread.start()
 
+        print("Listening on", args.socket)
+
         while True:
             message, address = sock.recvfrom(4096)
             try:
                 data = json.loads(message.decode('utf-8'))
-                print('Received:', data, flush=True)
+                print('Received:', data)
 
                 if data.get('mac') is None or data.get('runtime') is None:
-                    print('Invalid command, missing fields', flush=True)
+                    print('Invalid command, missing fields')
                     continue
 
                 mac = data['mac']

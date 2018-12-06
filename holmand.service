@@ -1,9 +1,13 @@
 [Unit]
 Description=Holman controller
-After=syslog.target network.target
+After=syslog.target network.target bluetooth.target
+
 [Service]
-ExecStart=/usr/local/bin/holdmand
+ExecStart=/usr/bin/python3 -u /usr/local/bin/holmand
 Restart=on-abort
 WorkingDirectory=/
+StandardOutput=syslog
+SyslogIdentifier=holmand
+
 [Install]
 WantedBy=multi-user.target
